@@ -1,7 +1,8 @@
 import React, { FC, useState } from "react";
 import { Modal, Form, Input, Button } from "antd";
-import {submit} from "./SubmitAxios";
+import { submit } from "./SubmitAxios";
 import "antd/dist/antd.css";
+import "./SubmitResult.css";
 import { ValidateErrorEntity } from "rc-field-form/lib/interface";
 const layout = {
   labelCol: { span: 0 },
@@ -11,7 +12,7 @@ const tailLayout = {
   wrapperCol: { span: 24 },
 };
 
-interface SubmitModalProps{
+interface SubmitModalProps {
   isModalVisible: boolean;
   onCancel: () => void;
   onSuccess: () => void;
@@ -22,25 +23,25 @@ export const SubmitModal: FC<SubmitModalProps> = (props) => {
   const [btnLabel, setbtnLabel] = useState("Send");
   const [loading, setloading] = useState(false);
   const [errorTips, seterrorTips] = useState("");
+
   const handleOk = () => {
     onCancel();
   };
 
-  const onFinish = async (values: {fullname: string;email: string; }) => {
+  const onFinish = async (values: { fullname: string; email: string }) => {
     setbtnLabel("Sending, please wait...");
     setloading(true);
     seterrorTips("");
     try {
       var result = await submit(values.fullname, values.email);
-      console.log(result);
       if (result?.status === 200) {
-        console.log("Success:", values);
         onSuccess();
       } else {
+        seterrorTips(result.error);
       }
     } catch (e) {
-      console.log({ e });
       // seterrorTips(e);
+      console.log("Failed:", e);
     }
     setbtnLabel("Send");
     setloading(false);
@@ -51,80 +52,77 @@ export const SubmitModal: FC<SubmitModalProps> = (props) => {
   };
 
   return (
-    <>
-      <Modal
-        title="Requst an invite"
-        open={isModalVisible}
-        onOk={handleOk}
-        onCancel={onCancel}
-        footer={null}
-        destroyOnClose={true}
+    <Modal
+      title="Requst an invite"
+      open={isModalVisible}
+      onOk={handleOk}
+      onCancel={onCancel}
+      footer={null}
+      destroyOnClose={true}
+    >
+      <Form
+        {...layout}
+        name="basic"
+        onFinish={onFinish}
+        onFinishFailed={onFinishFailed}
+        size="large"
       >
-        <Form
-          {...layout}
-          name="basic"
-          initialValues={{ remember: true }}
-          onFinish={onFinish}
-          onFinishFailed={onFinishFailed}
-          size="large"
+        <Form.Item
+          name="fullname"
+          rules={[
+            {
+              required: true,
+              message: "Full name needs to be at least 3 characters long!",
+              min: 3,
+            },
+          ]}
         >
-          <Form.Item
-            name="fullname"
-            rules={[
-              {
-                required: true,
-                message: "Full name needs to be at least 3 characters long!",
-                min: 3,
+          <Input placeholder="Full name" disabled={loading} />
+        </Form.Item>
+        <Form.Item
+          name="email"
+          rules={[
+            {
+              required: true,
+              message: "Please input a valid email",
+              type: "email",
+            },
+          ]}
+        >
+          <Input placeholder="Email" disabled={loading} />
+        </Form.Item>
+        <Form.Item
+          name="confirm_email"
+          rules={[
+            {
+              required: true,
+              message: "Please input a valid confirm email!",
+              type: "email",
+            },
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                if (!value || getFieldValue("email") === value) {
+                  return Promise.resolve();
+                }
+                return Promise.reject(
+                  new Error("The two email that you entered do not match!")
+                );
               },
-            ]}
-          >
-            <Input placeholder="Full name" disabled={loading} />
-          </Form.Item>
-          <Form.Item
-            name="email"
-            rules={[
-              {
-                required: true,
-                message: "Please input a valid email",
-                type: "email",
-              },
-            ]}
-          >
-            <Input placeholder="Email" disabled={loading} />
-          </Form.Item>
-          <Form.Item
-            name="confirm_email"
-            rules={[
-              {
-                required: true,
-                message: "Please input a valid confirm email!",
-                type: "email",
-              },
-              ({ getFieldValue }) => ({
-                validator(_, value) {
-                  if (!value || getFieldValue("email") === value) {
-                    return Promise.resolve();
-                  }
-                  return Promise.reject(
-                    new Error("The two email that you entered do not match!")
-                  );
-                },
-              }),
-            ]}
-          >
-            <Input placeholder="Confirm email" disabled={loading} />
-          </Form.Item>
+            }),
+          ]}
+        >
+          <Input placeholder="Confirm email" disabled={loading} />
+        </Form.Item>
 
-          <Form.Item {...tailLayout}>
-            <Button type="primary" htmlType="submit" block disabled={loading}>
-              {btnLabel}
-            </Button>
-          </Form.Item>
+        <Form.Item {...tailLayout}>
+          <Button type="primary" htmlType="submit" block disabled={loading}>
+            {btnLabel}
+          </Button>
+        </Form.Item>
 
-          <p className="center">{errorTips}</p>
-        </Form>
-      </Modal>
-    </>
+        <p className="center">{errorTips}</p>
+      </Form>
+    </Modal>
   );
 };
 export default SubmitModal;
