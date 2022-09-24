@@ -1,0 +1,10 @@
+{
+  "short_name": "BROCCOLI & CO",
+  "name": "A better way to enjoy every day.",
+  "icons": [
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
